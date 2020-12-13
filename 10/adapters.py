@@ -1,4 +1,18 @@
-# from functools import lru_cache
+input = open('./input.txt')  # Solution!
+# input = open('./input_sample.txt')  # 8
+# input = open('./input_sample_small.txt')  # 4
+# input = open('./input_sample_large.txt')  # 19208
+
+lines = input.readlines()
+lines_ints = list(map(int, lines))
+lines_ints.sort()
+
+device_adapter_rating = lines_ints[-1] + 3
+
+all_available_adapters = lines_ints.copy()
+all_available_adapters.append(0)  # Add an "adapter" for the zero-rating outlet
+all_available_adapters.append(device_adapter_rating)# Add an "adapter" for the device (largest adapter plus 3)
+all_available_adapters.sort()
 
 def joltage_difference_counts(ordered_output_list):
     difference_counts = {
@@ -18,35 +32,29 @@ def joltage_difference_counts(ordered_output_list):
             difference_counts[joltage_difference] += 1
     return(difference_counts)
 
-# @lru_cache(maxsize=None)
-def get_all_valid_arrangements(available_adapter_list, starting_output_joltage, goal_input_joltage):
+def caching(func):
+    tried = {}
+    def helper(x):
+        if x not in tried:
+            tried[x] = func(x)
+        return tried[x]
+    return helper
+
+@caching  # TURN BACK ON
+def get_all_valid_arrangements(goal_joltage):
     sum_of_valid_arrangements = 0
-    for adapter in available_adapter_list:
-        if (adapter > starting_output_joltage + 3 or adapter < starting_output_joltage):
-            # print("Dead end - ", starting_output_joltage, " -> ", adapter, " doesn't work.")
-            sum_of_valid_arrangements += 0
-        else:
-            if(adapter + 3 >= goal_input_joltage):
-                sum_of_valid_arrangements += 1
-                # print("Success - ", starting_output_joltage, " -> ", adapter, " works!")
-            list_less_adapter = list(available_adapter_list)[:]
-            list_less_adapter.remove(adapter)
-            if (len(list_less_adapter) > 0):
-                sum_of_valid_arrangements += get_all_valid_arrangements(tuple(list_less_adapter), adapter, goal_input_joltage)
+
+    if (goal_joltage == 0):  # Means that you've worked all the way down to the outlet's voltage. VALID ARRANGEMENT
+        sum_of_valid_arrangements = 1
+        return sum_of_valid_arrangements
+    
+    # For each VALID adapter in all_available_adapters (step down from goal_joltage by 1, 2, or 3)
+    for adapter in list(x for x in list(goal_joltage - y for y in range(1,4)) if x in all_available_adapters):
+        sum_of_valid_arrangements += get_all_valid_arrangements(adapter)
+
     return sum_of_valid_arrangements
 
 
-
-# input = open('./input.txt')  # Solution!
-# input = open('./input_sample.txt')  # 8
-# input = open('./input_sample_small.txt')  # 4
-input = open('./input_sample_large.txt')  # 19208
-lines = input.readlines()
-lines_ints = list(map(int, lines))
-lines_ints.sort()
-
-device_adapter_rating = lines_ints[-1] + 3
-
 part1_counts = joltage_difference_counts(lines_ints)
 print("Part 1 - The joltage difference product is: ", part1_counts[1] * part1_counts[3])
-print("Part 2 - The total # of valid arrangements is: ", get_all_valid_arrangements(tuple(lines_ints), 0, device_adapter_rating))
+print("Part 2 - The total # of valid arrangements is: ", get_all_valid_arrangements(device_adapter_rating))
