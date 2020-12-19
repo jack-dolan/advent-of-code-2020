@@ -58,7 +58,7 @@ def add_shell_layer(pocket_dimension_dict):  # Returns the same dict, with one l
     padded_pocket_dimension_dict[min_layer - 1] = OrderedDict()
     padded_pocket_dimension_dict.move_to_end(min_layer - 1, last=False)
     padded_pocket_dimension_dict[max_layer + 1] = OrderedDict()
-    padded_pocket_dimension_dict.move_to_end(min_layer + 1)
+    padded_pocket_dimension_dict.move_to_end(max_layer + 1)
     for layer_key in [min_layer-1, max_layer+1]:
         for row_key in range(min_row-1, max_row+2):
             padded_pocket_dimension_dict[layer_key][row_key]=OrderedDict()
@@ -114,5 +114,131 @@ print("Part 1 - Number of active cubes left after six 3-D simulation rounds: ",p
 # --------------------------- PART 1 -----------------------------------------------------------------------------------------------
 #
 # --------------------------- PART 2 -----------------------------------------------------------------------------------------------
+input = open('./input.txt')
+# input = open('./input_small.txt')
+lines = input.readlines()
+lines = list(map(lambda s: s.strip(), lines))
 
+wumbos = OrderedDict() # Layers starts as just the provided single slice of the pocket dimension. WUMBOS is to account for the new 4th 'w' dimension
+wumbos[0] = OrderedDict()  # This is the equivalent to layers in the last round
+wumbos[0][0] = OrderedDict()
+for row_index, row_value in enumerate(lines):
+    wumbos[0][0][row_index] = OrderedDict()
+    for col_index, col_value in enumerate(row_value):
+        wumbos[0][0][row_index][col_index] = col_value
+
+def print_pocket_dimension_4d(pocket_dimension_dict):
+    for wumbo_key in pocket_dimension_dict.keys():
+        for layer_key in pocket_dimension_dict[wumbo_key].keys():
+            print("z=", layer_key, " w=", wumbo_key)
+            for row_key in pocket_dimension_dict[wumbo_key][layer_key].keys():
+                row_list_to_print = []
+                for col_key in pocket_dimension_dict[wumbo_key][layer_key][row_key].keys():
+                    row_list_to_print.append(pocket_dimension_dict[wumbo_key][layer_key][row_key][col_key])
+                print(*row_list_to_print, sep=' ')
+
+def add_shell_layer_4d(pocket_dimension_dict):  # Returns the same dict, with one layer (on all 6 sides of the cube) of "." added
+    padded_pocket_dimension_dict = copy.deepcopy(pocket_dimension_dict)
+    # Add another dot to the ends of each row
+    min_column = min(padded_pocket_dimension_dict[0][0][0].keys())
+    max_column = max(padded_pocket_dimension_dict[0][0][0].keys())
+    for wumbo_key in padded_pocket_dimension_dict.keys():
+        for layer_key in padded_pocket_dimension_dict[wumbo_key].keys():
+            for row_key in padded_pocket_dimension_dict[wumbo_key][layer_key].keys():
+                padded_pocket_dimension_dict[wumbo_key][layer_key][row_key][min_column-1] = "."
+                padded_pocket_dimension_dict[wumbo_key][layer_key][row_key].move_to_end(min_column - 1, last=False)
+                padded_pocket_dimension_dict[wumbo_key][layer_key][row_key][max_column+1] = "."
+                padded_pocket_dimension_dict[wumbo_key][layer_key][row_key].move_to_end(max_column + 1)
+    # Add another row of dots to the ends of each layer
+    min_row = min(padded_pocket_dimension_dict[0][0].keys())
+    max_row = max(padded_pocket_dimension_dict[0][0].keys())
+    for wumbo_key in padded_pocket_dimension_dict.keys():
+        for layer_key in padded_pocket_dimension_dict[wumbo_key].keys():
+            padded_pocket_dimension_dict[wumbo_key][layer_key][min_row-1] = OrderedDict()
+            padded_pocket_dimension_dict[wumbo_key][layer_key].move_to_end(min_row - 1, last=False)
+            padded_pocket_dimension_dict[wumbo_key][layer_key][max_row+1] = OrderedDict()
+            padded_pocket_dimension_dict[wumbo_key][layer_key].move_to_end(max_row + 1)
+    for wumbo_key in padded_pocket_dimension_dict.keys():
+        for layer_key in padded_pocket_dimension_dict[wumbo_key].keys():
+            for row_key in [min_row-1, max_row+1]:
+                for i in range(min_column-1, max_column+2):
+                    padded_pocket_dimension_dict[wumbo_key][layer_key][row_key][i] = "."
+    # Add another layer of dots to the ends of the pocket_dimension_dict    
+    min_layer = min(padded_pocket_dimension_dict[0].keys())
+    max_layer = max(padded_pocket_dimension_dict[0].keys())
+    for wumbo_key in padded_pocket_dimension_dict.keys():
+        padded_pocket_dimension_dict[wumbo_key][min_layer - 1] = OrderedDict()
+        padded_pocket_dimension_dict[wumbo_key].move_to_end(min_layer - 1, last=False)
+        padded_pocket_dimension_dict[wumbo_key][max_layer + 1] = OrderedDict()
+        padded_pocket_dimension_dict[wumbo_key].move_to_end(max_layer + 1)
+    for wumbo_key in padded_pocket_dimension_dict.keys():
+        for layer_key in [min_layer-1, max_layer+1]:
+            for row_key in range(min_row-1, max_row+2):
+                padded_pocket_dimension_dict[wumbo_key][layer_key][row_key]=OrderedDict()
+                for col_key in range(min_column-1, max_column+2):
+                    padded_pocket_dimension_dict[wumbo_key][layer_key][row_key][col_key] = "."
+    # Add another wumbo to each end of the dict. Fill each with layers => rows => cols of zero
+    min_wumbo = min(padded_pocket_dimension_dict.keys())
+    max_wumbo = max(padded_pocket_dimension_dict.keys())
+    padded_pocket_dimension_dict[min_wumbo - 1] = OrderedDict()
+    padded_pocket_dimension_dict.move_to_end(min_wumbo - 1, last=False)
+    padded_pocket_dimension_dict[max_wumbo + 1] = OrderedDict()
+    padded_pocket_dimension_dict.move_to_end(max_wumbo + 1)
+    for wumbo_key in [min_wumbo-1, max_wumbo+1]:
+        for layer_key in range(min_layer-1, max_layer+2):
+            padded_pocket_dimension_dict[wumbo_key][layer_key] = OrderedDict()
+            for row_key in range(min_row-1, max_row+2):
+                padded_pocket_dimension_dict[wumbo_key][layer_key][row_key]=OrderedDict()
+                for col_key in range(min_column-1, max_column+2):
+                    padded_pocket_dimension_dict[wumbo_key][layer_key][row_key][col_key] = "."
+
+    return padded_pocket_dimension_dict
+
+def find_active_neighbors_4d(coordinate_tuple, unpadded_pocket_dimension_dict):
+    active_neighbor_list = []
+    for neighbor in four_d_neighbors:
+        neighbor_coordinates = (coordinate_tuple[0]+neighbor[0],coordinate_tuple[1]+neighbor[1],coordinate_tuple[2]+neighbor[2],coordinate_tuple[3]+neighbor[3])
+        x = neighbor_coordinates[0]
+        y = neighbor_coordinates[1]
+        z = neighbor_coordinates[2]
+        w = neighbor_coordinates[3]
+        if (w in unpadded_pocket_dimension_dict.keys()):
+            if (z in unpadded_pocket_dimension_dict[w].keys()):
+                if (y in unpadded_pocket_dimension_dict[w][z].keys()):
+                    if (x in unpadded_pocket_dimension_dict[w][z][y].keys()):
+                        if (unpadded_pocket_dimension_dict[w][z][y][x] == "#"):
+                            active_neighbor_list.append((x, y, z, w))
+    return active_neighbor_list
+
+
+mutable_padded_dict = copy.deepcopy(wumbos)
+# print_pocket_dimension_4d(mutable_padded_dict)
+# print_pocket_dimension_4d(add_shell_layer_4d(mutable_padded_dict))
+
+for i in range(1,7):
+    mutable_padded_dict = add_shell_layer_4d(mutable_padded_dict)
+    temp_mutable_padded_dict = copy.deepcopy(mutable_padded_dict)
+    for wumbo_key in mutable_padded_dict.keys():
+        for layer_key in mutable_padded_dict[wumbo_key].keys():
+            for row_key in mutable_padded_dict[wumbo_key][layer_key].keys():
+                for col_key in mutable_padded_dict[wumbo_key][layer_key][row_key].keys():
+                    neighbor_list = find_active_neighbors_4d((col_key, row_key, layer_key, wumbo_key), mutable_padded_dict)
+                    if (mutable_padded_dict[wumbo_key][layer_key][row_key][col_key]=="#"):
+                        if(not(len(neighbor_list)==2 or len(neighbor_list)==3)):
+                            temp_mutable_padded_dict[wumbo_key][layer_key][row_key][col_key]="."
+                    else:
+                        if (len(neighbor_list)==3):
+                            temp_mutable_padded_dict[wumbo_key][layer_key][row_key][col_key]="#"
+    mutable_padded_dict = temp_mutable_padded_dict
+
+
+
+part2_active_count = 0
+for wumbo_key in mutable_padded_dict.keys():
+    for layer_key in mutable_padded_dict[wumbo_key].keys():
+            for row_key in mutable_padded_dict[wumbo_key][layer_key].keys():
+                for col_key in mutable_padded_dict[wumbo_key][layer_key][row_key].keys():
+                    if (mutable_padded_dict[wumbo_key][layer_key][row_key][col_key]=="#"):
+                        part2_active_count += 1
+print("Part 2 - Number of active cubes left after six 4-D simulation rounds: ",part2_active_count)
 # --------------------------- PART 2 -----------------------------------------------------------------------------------------------
